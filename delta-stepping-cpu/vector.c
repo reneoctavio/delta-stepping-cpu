@@ -25,6 +25,16 @@ void vector_append(Vector *vector, unsigned int value) {
     vector->data[vector->size++] = value;
 }
 
+void vector_remove_last(Vector *vector, unsigned int *value) {
+    // Get the final value and decrease size
+    *value = vector->data[vector->size--];
+}
+
+void vector_clear(Vector *vector) {
+    // Remove all values
+    vector->size = 0;
+}
+
 int vector_get(Vector *vector, unsigned int index) {
     if (index >= vector->size) {
         printf("Index %d out of bounds for vector of size %d\n", index, vector->size);

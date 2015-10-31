@@ -23,6 +23,10 @@ void vector_init(Vector *vector, unsigned int initial_capacity);
 
 void vector_append(Vector *vector, unsigned int value);
 
+void vector_remove_last(Vector *vector, unsigned int *value);
+
+void vector_clear(Vector *vector);
+
 int vector_get(Vector *vector, unsigned int index);
 
 void vector_set(Vector *vector, unsigned int index, unsigned int value);

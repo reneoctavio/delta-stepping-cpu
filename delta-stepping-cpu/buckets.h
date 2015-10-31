@@ -18,12 +18,8 @@
 
 typedef struct Buckets {
 
-    unsigned int *memory;
+    Vector *list;
     
-    unsigned int *head;
-    unsigned int *tail;
-    
-    unsigned int *cur_bucket;
     unsigned int cur_bucket_num;
     
     unsigned int delta;
@@ -43,13 +39,9 @@ unsigned int buckets_is_bucket_empty(Buckets *buckets, unsigned int bucket_numbe
 
 unsigned int buckets_is_buckets_empty(Buckets *buckets);
 
-unsigned int buckets_pos_of_vertex_in_bucket(Buckets buckets, unsigned int bucket_number, unsigned int vertex);
-
-void buckets_remove_vertex_pos_in_bucket(Buckets *buckets, unsigned int bucket_number, unsigned int pos);
+unsigned int buckets_get_vertex(Buckets buckets, unsigned int cur_bucket, unsigned int pos_in_bucket);
 
 void print_bucket(Buckets buckets);
-
-unsigned int buckets_get_pos_in_memory(Buckets buckets, unsigned int cur_bucket, unsigned int pos_in_bucket);
 
 void buckets_free(Buckets *buckets);
 

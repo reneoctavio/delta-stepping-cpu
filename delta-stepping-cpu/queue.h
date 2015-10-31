@@ -12,14 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Node {
+typedef struct QueueNode {
     unsigned int data;
-    struct Node* next;
-} Node;
+    struct QueueNode* next;
+} QueueNode;
 
 typedef struct Queue {
-    Node *first;
-    Node *last;
+    QueueNode *first;
+    QueueNode *last;
 } Queue;
 
 void enqueue(Queue *queue, unsigned int data);

@@ -10,7 +10,7 @@
 
 void enqueue(Queue *queue, unsigned int data) {
     // Allocate new node
-    Node *temp = malloc(sizeof(Node));
+    QueueNode *temp = malloc(sizeof(QueueNode));
     
     // Set new node props
     temp->data = data;
@@ -28,7 +28,7 @@ void enqueue(Queue *queue, unsigned int data) {
 }
 
 void dequeue(Queue *queue, unsigned int *data) {
-    Node *temp = queue->first;
+    QueueNode *temp = queue->first;
     
     // Check if queue is empty
     if (queue->first == NULL) {
@@ -64,7 +64,7 @@ void queue_initialize(Queue *queue) {
 }
 
 void queue_print(Queue queue) {
-    Node *temp = queue.first;
+    QueueNode *temp = queue.first;
     printf("Queue: ");
     while (temp != NULL) {
         printf("%02u ", temp->data);

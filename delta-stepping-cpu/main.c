@@ -53,22 +53,29 @@ int main(int argc, const char * argv[]) {
         while (!buckets_is_bucket_empty(&buckets, i)) {
             // For every vertex in Bucket[i]
             for (unsigned int j = 0; j < delta; j++) {
-                // Get vertex
-                unsigned int pos_vex = buckets_get_pos_in_memory(buckets, i, j);
-                unsigned int vertex = buckets.memory[pos_vex];
-                //printf("Vertex: %010u\n", vertex);
+                // Get bucket position
+                unsigned int bucket_pos = (i % buckets.num_buckets) * buckets.delta;
+                Vector *bucket = &buckets.list[bucket_pos];
+                
+                // Break if it is empty
+                if (bucket->size == 0) {
+                    break;
+                }
+                
+                // Get vertex and remove vertex from Bucket[i]
+                unsigned int vertex;
+                vector_remove_last(bucket, &vertex);
+                // Add to Q
+                enqueue(&Q, vertex);
+                
+                queue_print(Q);
+                print_bucket(buckets);
                 
                 // Break if there is no more vertices
                 if (vertex == UINT_MAX) {
                     //break;
                 }
                 else {
-                    // Move this vertex to Queue Q
-                    enqueue(&Q, vertex);
-                    queue_print(Q);
-                    // Remove vertex from Bucket[i]
-                    buckets_remove_vertex(&buckets, i, vertex);
-                    print_bucket(buckets);
                     // Get this vertex edges
                     for (unsigned int idx = csr.indptr[vertex]; idx < csr.indptr[vertex + 1]; idx++) {
                         unsigned int tgt_vertex = csr.indices[idx];

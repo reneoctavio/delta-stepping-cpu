@@ -38,15 +38,6 @@ void relax(csr_matrix csr, unsigned int vertex, unsigned int distance, Buckets *
         if ((buckets->cur_bucket_num + buckets->num_buckets) > cur_bucket) {
             buckets_remove_vertex(buckets, cur_bucket, vertex);
         }
-
-        
-        /*
-        if (cur_bucket < (csr.max_edge + 1)) {
-            unsigned int pos = buckets_pos_of_vertex_in_bucket(*buckets, cur_bucket, vertex);
-            if (pos != UINT_MAX) {
-                buckets_remove_vertex_pos_in_bucket(buckets, cur_bucket, pos);
-            }
-        }*/
         
         // Add at Bucket no. floor(distance/delta)
         buckets_add_vertex(buckets, tgt_bucket, vertex);

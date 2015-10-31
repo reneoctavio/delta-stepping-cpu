@@ -13,112 +13,123 @@ void buckets_create(unsigned int num_vertices, unsigned int max_edge, unsigned i
     // Calculate number size of memory for buckets
     unsigned int num_of_buckets = ceil((double) max_edge / (double) delta);
     
-    // Allocate memory for buckets
-    unsigned int *b_mem = malloc(sizeof(unsigned int) * num_of_buckets * delta);
+    // Allocate buckets
+    Vector *b_mem = malloc(sizeof(Vector) * num_of_buckets);
     
-    // Buckets hold no values
-    for (unsigned int i = 0; i < (num_of_buckets * delta); i++) {
-        b_mem[i] = UINT_MAX;
+    // Allocate a dynamic vetor to each bucket, initial size of delta
+    for (unsigned int i = 0; i < num_of_buckets; i++) {
+        vector_init(&b_mem[i], delta);
     }
     
     // Copy out
-    buckets->memory = b_mem;
-    
-    // Set common positions in memory
-    buckets->head = b_mem;
-    buckets->tail = b_mem + (num_of_buckets * delta) - 1;
+    buckets->list = b_mem;
     
     // Props
     buckets->delta = delta;
     buckets->num_buckets = num_of_buckets;
-    
-    // Current bucket
-    buckets->cur_bucket = buckets->head;
     buckets->cur_bucket_num = 0;
 }
 
 void buckets_add_vertex(Buckets *buckets, unsigned int bucket_number, unsigned int vertex) {
-    for (unsigned int i = 0; i < buckets->delta; i++) {
-        unsigned int pos = buckets_get_pos_in_memory(*buckets, bucket_number, i);
-        if (buckets->memory[pos] == UINT_MAX) {
-            buckets->memory[pos] = vertex;
-            break;
+    // Get bucket position
+    unsigned int bucket_pos = (bucket_number % buckets->num_buckets) * buckets->delta;
+    Vector *bucket = &buckets->list[bucket_pos];
+    
+    // If there is an empty place, put it in there
+    for (unsigned int i = 0; i < bucket->size; i++) {
+        if (bucket->data[i] == UINT_MAX) {
+            bucket->data[i] = vertex;
+            return;
         }
     }
+    
+    // If not, append
+    vector_append(bucket, vertex);
 }
 
 void buckets_clear_bucket(Buckets *buckets, unsigned int bucket_number) {
-    for (unsigned int i = 0; i < buckets->delta; i++) {
-        unsigned int pos = buckets_get_pos_in_memory(*buckets, bucket_number, i);
-        buckets->memory[pos] = UINT_MAX;
-    }
+    // Get bucket position
+    unsigned int bucket_pos = (bucket_number % buckets->num_buckets) * buckets->delta;
+    Vector *bucket = &buckets->list[bucket_pos];
+    
+    // Clear vector
+    vector_clear(bucket);
 }
 
 void buckets_remove_vertex(Buckets *buckets, unsigned int bucket_number, unsigned int vertex) {
-    for (unsigned int i = 0; i < buckets->delta; i++) {
-        unsigned int pos = buckets_get_pos_in_memory(*buckets, bucket_number, i);
-        if (buckets->memory[pos] == vertex) {
-            buckets->memory[pos] = UINT_MAX;
-            break;
+    // Get bucket position
+    unsigned int bucket_pos = (bucket_number % buckets->num_buckets) * buckets->delta;
+    Vector *bucket = &buckets->list[bucket_pos];
+    
+    if (bucket->size == 0) {
+        return;
+    }
+    
+    for (unsigned int i = 0; i < bucket->size; i++) {
+        if (bucket->data[i] == vertex) {
+            if (i == (bucket->size - 1)) {
+                bucket->size--;
+                return;
+            }
+            bucket->data[i] = UINT_MAX;
+            return;
         }
     }
-}
-
-void buckets_remove_vertex_pos_in_bucket(Buckets *buckets, unsigned int bucket_number, unsigned int pos) {
-    unsigned int pos_mem = buckets_pos_of_vertex_in_bucket(*buckets, bucket_number, pos);
-    buckets->memory[pos_mem] = UINT_MAX;
 }
 
 unsigned int buckets_is_bucket_empty(Buckets *buckets, unsigned int bucket_number) {
-    for (unsigned int i = 0; i < buckets->delta; i++) {
-        unsigned int pos = buckets_get_pos_in_memory(*buckets, bucket_number, i);
-        if (buckets->memory[pos] != UINT_MAX) {
-            return 0;
-        }
+    unsigned int bucket_pos = (bucket_number % buckets->num_buckets) * buckets->delta;
+    if (buckets->list[bucket_pos].size == 0) {
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 unsigned int buckets_is_buckets_empty(Buckets *buckets) {
     for (unsigned int i = 0; i < (buckets->num_buckets * buckets->delta); i++) {
-        if (buckets->memory[i] != UINT_MAX) {
+        if (buckets->list[i].size != 0) {
             return 0;
         }
     }
     return 1;
 }
 
-unsigned int buckets_pos_of_vertex_in_bucket(Buckets buckets, unsigned int bucket_number, unsigned int vertex) {
-    for (unsigned int i = 0; i < buckets.delta; i++) {
-        unsigned int pos = buckets_get_pos_in_memory(buckets, bucket_number, i);
-        if (buckets.memory[pos] == vertex) {
-            return i;
-        }
+unsigned int buckets_get_vertex(Buckets buckets, unsigned int cur_bucket, unsigned int pos_in_bucket) {
+    // Get bucket position
+    unsigned int bucket_pos = (cur_bucket % buckets.num_buckets) * buckets.delta;
+    // Get vertex from a position inside the selected bucket
+    Vector *bucket = &buckets.list[bucket_pos];
+    if (pos_in_bucket > bucket->size) {
+        return UINT_MAX;
     }
-    return UINT_MAX;
+    return bucket->data[pos_in_bucket];
 }
 
 void buckets_free(Buckets *buckets) {
-    free(buckets->memory);
+    for (unsigned int i = 0; i < buckets->num_buckets; i++) {
+        Vector *temp = &buckets->list[i];
+        vector_free(temp);
+    }
+    free(buckets->list);
 }
 
 void print_bucket(Buckets buckets) {
     printf("Buckets: \n");
     for (unsigned int i = buckets.cur_bucket_num; i < (buckets.num_buckets + buckets.cur_bucket_num); i++) {
         printf("Bucket #%02u: ", i);
-        for (unsigned int j = 0; j < buckets.delta; j++) {
-            unsigned int pos = buckets_get_pos_in_memory(buckets, i, j);
-            if (buckets.memory[pos] == UINT_MAX) {
+        // Get bucket position
+        unsigned int bucket_pos = (i % buckets.num_buckets) * buckets.delta;
+        Vector *bucket = &buckets.list[bucket_pos];
+        
+        for (unsigned int j = 0; j < bucket->size; j++) {
+            unsigned int vertex = bucket->data[j];
+            if (vertex == UINT_MAX) {
                 printf(" -- ");
             }
             else {
-                printf(" %02u ", buckets.memory[pos]);
+                printf(" %02u ", vertex);
             }
         }
         printf("\n");
     }
-}
-
-unsigned int buckets_get_pos_in_memory(Buckets buckets, unsigned int cur_bucket, unsigned int pos_in_bucket) {
-    return (cur_bucket % buckets.num_buckets) * buckets.delta + pos_in_bucket;
 }
