@@ -10,6 +10,7 @@
 #define buckets_h
 
 #include "constants.h"
+#include "vector.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -18,7 +19,6 @@
 typedef struct Buckets {
 
     unsigned int *memory;
-    unsigned int **bucket_position;
     
     unsigned int *head;
     unsigned int *tail;
@@ -37,8 +37,6 @@ void buckets_add_vertex(Buckets *buckets, unsigned int bucket_number, unsigned i
 
 void buckets_clear_bucket(Buckets *buckets, unsigned int bucket_number);
 
-void buckets_assign_next_bucket(Buckets *buckets, unsigned int current_bucket_number);
-
 void buckets_remove_vertex(Buckets *buckets, unsigned int bucket_number, unsigned int vertex);
 
 unsigned int buckets_is_bucket_empty(Buckets *buckets, unsigned int bucket_number);
@@ -50,5 +48,9 @@ unsigned int buckets_pos_of_vertex_in_bucket(Buckets buckets, unsigned int bucke
 void buckets_remove_vertex_pos_in_bucket(Buckets *buckets, unsigned int bucket_number, unsigned int pos);
 
 void print_bucket(Buckets buckets);
+
+unsigned int buckets_get_pos_in_memory(Buckets buckets, unsigned int cur_bucket, unsigned int pos_in_bucket);
+
+void buckets_free(Buckets *buckets);
 
 #endif /* buckets_h */
