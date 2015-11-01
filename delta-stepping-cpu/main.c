@@ -15,16 +15,21 @@
 #include "helper.h"
 #include "queue.h"
 
+#define MSG_RELAX 0
+#define MSG_DISTC 0
+#define MSG_BUCKT 0
+#define MSG_QUEUE 0
+
 void print_dist(unsigned int *dist, unsigned int num_vertices);
 
 int main(int argc, const char * argv[]) {
     
     // Read CSR matrix
     csr_matrix csr;
-    read_csr_graph("test.data", &csr);
+    read_csr_graph("USA-road-d.NY.data", &csr);
     
     // Delta
-    unsigned int delta = 1;
+    unsigned int delta = 50;
     
     // Set initial distances
     unsigned int *dist = malloc(sizeof(unsigned int) * csr.num_nodes);
@@ -38,7 +43,9 @@ int main(int argc, const char * argv[]) {
     unsigned int s = 0;
     relax(csr, s, 0, &buckets, dist);
     
+#if MSG_BUCKT
     print_bucket(buckets);
+#endif
     
     // Set buckets iterator
     unsigned int i = 0;
@@ -50,47 +57,41 @@ int main(int argc, const char * argv[]) {
     // Outer loop
     while (!buckets_is_buckets_empty(&buckets)) {
         queue_clear(&Q);
-        while (!buckets_is_bucket_empty(&buckets, i)) {
-            // For every vertex in Bucket[i]
-            for (unsigned int j = 0; j < delta; j++) {
-                // Get bucket position
-                unsigned int bucket_pos = (i % buckets.num_buckets) * buckets.delta;
-                Vector *bucket = &buckets.list[bucket_pos];
-                
-                // Break if it is empty
-                if (bucket->size == 0) {
-                    break;
-                }
-                
-                // Get vertex and remove vertex from Bucket[i]
-                unsigned int vertex;
-                vector_remove_last(bucket, &vertex);
-                // Add to Q
-                enqueue(&Q, vertex);
-                
-                queue_print(Q);
-                print_bucket(buckets);
-                
-                // Break if there is no more vertices
-                if (vertex == UINT_MAX) {
-                    //break;
-                }
-                else {
-                    // Get this vertex edges
-                    for (unsigned int idx = csr.indptr[vertex]; idx < csr.indptr[vertex + 1]; idx++) {
-                        unsigned int tgt_vertex = csr.indices[idx];
-                        unsigned int edge_value = csr.data[idx];
-                        // Relax light edges
-                        if (get_edge_weight(edge_value, delta) == LIGHT) {
-                            unsigned int distance = dist[vertex] + edge_value;
-                            printf("relax(%u, %u)\n", tgt_vertex, distance);
-                            relax(csr, tgt_vertex, distance, &buckets, dist);
-                            print_bucket(buckets);
-                            print_dist(dist, csr.num_nodes);
-                        }
-                    }
+            
+        // Get bucket position
+        unsigned int bucket_pos = (i % buckets.num_buckets);
+        SingleNode **bucket = &buckets.list[bucket_pos];
+        
+        // Get vertex
+        unsigned int vertex = pop(bucket);
+        
+        while (vertex != UINT_MAX) {
+            // Add to Q
+            enqueue(&Q, vertex);
+#if MSG_QUEUE
+            queue_print(Q);
+#endif
+#if MSG_BUCKT
+            print_bucket(buckets);
+#endif
+            // Get this vertex edges
+            for (unsigned int idx = csr.indptr[vertex]; idx < csr.indptr[vertex + 1]; idx++) {
+                unsigned int tgt_vertex = csr.indices[idx];
+                unsigned int edge_value = csr.data[idx];
+                // Relax light edges
+                if (get_edge_weight(edge_value, delta) == LIGHT) {
+                    unsigned int distance = dist[vertex] + edge_value;
+#if MSG_RELAX
+                    printf("Light Relax(%u, %u)\n", tgt_vertex, distance);
+#endif
+                    relax(csr, tgt_vertex, distance, &buckets, dist);
+#if MSG_BUCKT
+                    print_bucket(buckets);
+#endif
                 }
             }
+            // Get next vertex if available
+            vertex = pop(bucket);
         }
         
         i++;
@@ -99,7 +100,9 @@ int main(int argc, const char * argv[]) {
         while (Q.first != NULL) {
             unsigned int vertex;
             dequeue(&Q, &vertex);
+#if MSG_QUEUE
             queue_print(Q);
+#endif
             
             for (unsigned int idx = csr.indptr[vertex]; idx < csr.indptr[vertex + 1]; idx++) {
                 unsigned int tgt_vertex = csr.indices[idx];
@@ -107,10 +110,16 @@ int main(int argc, const char * argv[]) {
                 // Relax light edges
                 if (get_edge_weight(edge_value, delta) == HEAVY) {
                     unsigned int distance = dist[vertex] + edge_value;
+#if MSG_RELAX
+                    printf("Heavy Relax(%u, %u)\n", tgt_vertex, distance);
+#endif
                     relax(csr, tgt_vertex, distance, &buckets, dist);
-                    printf("relax(%u, %u)\n", tgt_vertex, distance);
+#if MSG_DISTC
                     print_dist(dist, csr.num_nodes);
+#endif
+#if MSG_BUCKT
                     print_bucket(buckets);
+#endif
                 }
             }
         }
@@ -119,11 +128,9 @@ int main(int argc, const char * argv[]) {
     print_dist(dist, csr.num_nodes);
     
     free(dist);
-    
     free(csr.data);
     free(csr.indices);
     free(csr.indptr);
-    
     buckets_free(&buckets);
     
     return 0;

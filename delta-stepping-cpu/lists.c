@@ -90,14 +90,14 @@ unsigned int remove_by_index(SingleNode ** head, unsigned int idx) {
 
 void remove_by_value(SingleNode ** head, unsigned int value) {
     SingleNode * current = *head;
-    SingleNode * temp_node = NULL;
     
+    unsigned int idx = 0;
     while (current != NULL) {
         if (current->value == value) {
-            temp_node->next = current->next;
-            free(current);
+            remove_by_index(head, idx);
+            break;
         }
-        temp_node = current;
+        idx++;
         current = current->next;
     }
 }
